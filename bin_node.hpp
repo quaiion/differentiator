@@ -7,9 +7,9 @@ enum NODE_TYPE {BINARY_OPERATION, UNARY_OPERATION, CONSTANT, VARIABLE, DISTRUCTE
 enum OPERATION_TYPE {PLUS, MINUS, MULT, DIV, SIN, COS, TAN, COT, ASIN, ACOS, ATAN, ACOT, LOG, LN, POW, EXP};
 
 const char * const OPERATION_SYMB [] = {"+" /* PLUS */, "-" /* MINUS */, "*" /* MULT */, "/" /* DIV */,                 // Индексы в массиве совмещены с константами в enum
-                                        "sin" /* SIN */, "cos" /* COS */, "tg" /* TAN */, "ctg" /* COT */,
-                                        "arcsin" /* ASIN */, "arccos" /* ACOS */, "arctg" /* ATAN */,
-                                        "arcctg" /* ACOT */, "log" /* LOG */, "ln" /* LN */, "^" /* POW */,
+                                        "sin" /* SIN */, "cos" /* COS */, "tan" /* TAN */, "cot" /* COT */,
+                                        "arcsin" /* ASIN */, "arccos" /* ACOS */, "arctan" /* ATAN */,
+                                        "arccot" /* ACOT */, "log" /* LOG */, "ln" /* LN */, "^" /* POW */,
                                         "exp" /* EXP */};
 
 OPERATION_TYPE UNARY_OPERATIONS [] = {PLUS, MINUS, SIN, COS, TAN, COT, ASIN, ACOS, ATAN, ACOT, LN, EXP};

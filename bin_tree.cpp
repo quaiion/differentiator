@@ -13,7 +13,8 @@ node, фактически обозначающего узел, с которы�
 */
 
 static void free_node (bin_node_t *node);
-static size_t dump_node (bin_node_t *node, FILE *instr_file, int ident = 0);
+static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, int ident = 0);
+static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracket);
 // static bin_node_t *bt_track_node (bin_node_t *node, char *target_name,
 //                                   void (*spot_pos_node) (const bin_node_t *), void (*spot_neg_node) (const bin_node_t *));
 // static bin_node_t *tb_stack_node (bin_node_t *node, char *target_name, node_stack_t *stack);
@@ -319,7 +320,7 @@ void bin_tree_vis_dump (bin_tree_t *tree, char *file_name) {
 
     FILE *instr_file = fopen ("vis_instr.gv", "w");
     fprintf (instr_file, "digraph vis{\n\trankdir=HR;");
-    dump_node (tree->root, instr_file);
+    vis_dump_node (tree->root, instr_file);
     fprintf (instr_file, "\n}");
     fclose (instr_file);
 
@@ -327,9 +328,10 @@ void bin_tree_vis_dump (bin_tree_t *tree, char *file_name) {
     sprintf (cmd, "dot -Tpng vis_instr.gv -o %s", file_name);
     system (cmd);
     free (cmd);
+    system ("del vis_instr.gv");
 }
 
-static size_t dump_node (bin_node_t *node, FILE *instr_file, size_t ident /* = 0 */) {      // Функция получает на вход НОМЕР текущего шага рекурсии (т.е. НАИМЕНЬШИЙ незанятый идентификатор), возвращает НАИБОЛЬШИЙ занятый идентификатор
+static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /* = 0 */) {      // Функция получает на вход НОМЕР текущего шага рекурсии (т.е. НАИМЕНЬШИЙ незанятый идентификатор), возвращает НАИБОЛЬШИЙ занятый идентификатор
 
     assert (node);
     assert (instr_file);
@@ -338,34 +340,34 @@ static size_t dump_node (bin_node_t *node, FILE *instr_file, size_t ident /* = 0
 
         case CONSTANT: {
 
-            fprintf (instr_file, "\n\t%d [shape=\"egg\",style=\"filled\",fillcolor=\"yellow\",label=\" { <dat> %lld } \"];", ident, node->data);
+            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"yellow\",label=\" { <dat> %lld } \"];", ident, node->data);
             return ident;
         }
 
         case VARIABLE: {
 
-            fprintf (instr_file, "\n\t%d [shape=\"egg\",style=\"filled\",fillcolor=\"orange\",label=\" { <dat> %c } \"];", ident, node->data);
+            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"orange\",label=\" { <dat> %c } \"];", ident, node->data);
             return ident;
         }
 
         case UNARY_OPERATION: {
 
-            fprintf (instr_file, "\n\t%d [shape=record,label=\" { <dat> %s | { <left> left | <right> --- }} \"];", ident, OPERATION_SYMB [node->data]);
+            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> --- }} \"];", ident, OPERATION_SYMB [node->data]);
 
-            size_t ident_2 = dump_node (node->left, instr_file, ident + 1);
-            fprintf (instr_file, "\n\t%d:<left> -> %d:<dat>;", ident, ident + 1);
+            size_t ident_2 = vis_dump_node (node->left, instr_file, ident + 1);
+            fprintf (instr_file, "\n\t%llu:<left> -> %llu:<dat>;", ident, ident + 1);
 
             return ident_2 + 1;
         }
 
         case BINARY_OPERATION: {
 
-            fprintf (instr_file, "\n\t%d [shape=record,label=\" { <dat> %s | { <left> left | <right> right }} \"];", ident, OPERATION_SYMB [node->data]);
+            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> right }} \"];", ident, OPERATION_SYMB [node->data]);
 
-            size_t ident_2 = dump_node (node->left, instr_file, ident + 1);
-            size_t ident_3 = dump_node (node->right, instr_file, ident_2 + 1);
-            fprintf (instr_file, "\n\t%d:<left> -> %d:<dat>;", ident, ident + 1);
-            fprintf (instr_file, "\n\t%d:<right> -> %d:<dat>;", ident, ident_2 + 1);
+            size_t ident_2 = vis_dump_node (node->left, instr_file, ident + 1);
+            size_t ident_3 = vis_dump_node (node->right, instr_file, ident_2 + 1);
+            fprintf (instr_file, "\n\t%llu:<left> -> %llu:<dat>;", ident, ident + 1);
+            fprintf (instr_file, "\n\t%llu:<right> -> %llu:<dat>;", ident, ident_2 + 1);
 
             return ident_3;
         }
@@ -374,7 +376,218 @@ static size_t dump_node (bin_node_t *node, FILE *instr_file, size_t ident /* = 0
 
 void bin_tree_form_dump (bin_tree_t *tree, char *file_name) {
 
-    
+    assert (tree);
+    assert (file_name);
+
+#ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
+
+    if (bin_tree_verify_qck (tree) != NULL) {
+
+        printf ("\nBinary tree: formula dump autoverification failed, operation terminated\n");
+        return;
+    }
+
+#endif
+
+    FILE *instr_file = fopen ("form_instr.tex", "w");
+    fprintf (instr_file, "\\documentclass{minimal}\n\\usepackage{mathtools}\n\\begin{document}\n\\begin{displaymath}\n");
+    form_dump_node (tree->root, instr_file);
+    fprintf (instr_file, "\n\\end{displaymath}\n\\end{document}\n");
+    fclose (instr_file);
+
+    char *ren_cmd = (char *) calloc (MAX_FILE_NAME + 24, sizeof (char));
+    sprintf (ren_cmd, "ren form_instr.pdf %s", file_name);
+
+    system ("latex form_instr.tex");
+    system ("dvipdfm form_instr.dvi");
+    system ("del form_instr.dvi form_instr.aux form_instr.log form_instr.tex");
+    system (ren_cmd);
+    free (ren_cmd);
+}
+
+static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracket) {
+
+    assert (node);
+    assert (instr_file);
+
+    switch (node->type) {
+
+        case CONSTANT: {
+
+            if (node->data < 0 && prev_bracket == false) {
+
+                fprintf (instr_file, "(%lld)", node->data);
+
+            } else {
+
+                fprintf (instr_file, "%lld", node->data);
+            }
+            return;
+        }
+
+        case VARIABLE: {
+
+            fprintf (instr_file, "%c", node->data);
+            return;
+        }
+
+        case UNARY_OPERATION: {
+
+            bool plus_or_minus = false, int_brackets = true;
+            if (node->data == PLUS || node->data == MINUS) {
+
+                plus_or_minus = true;
+            }
+            if (node->left->type == VARIABLE || node->left->type == CONSTANT ||
+                (plus_or_minus && (node->left->type != BINARY_OPERATION ||
+                (node->left->data != PLUS && node->left->data != MINUS)))) {
+
+                int_brackets = false;
+            }
+
+            if (plus_or_minus) {
+
+                if (prev_bracket == false) {
+                    
+                    fprintf (instr_file, "(");
+                }
+            } else {
+
+                fprintf (instr_file, "\\");
+            }
+            fprintf (instr_file, "%s", OPERATION_SYMB [node->data]);
+            if (int_brackets) {
+
+                fprintf (instr_file, "(");
+            }
+            form_dump_node (node->left, instr_file, int_brackets);
+            if (int_brackets) {
+
+                fprintf (instr_file, ")");
+            }
+            if (plus_or_minus && prev_bracket == false) {
+
+                fprintf (instr_file, ")");
+            }
+        }
+
+        case BINARY_OPERATION: {
+
+            switch (node->data) {
+
+                case PLUS: {
+
+                    form_dump_node (node->left, instr_file, prev_bracket);
+                    fprintf (instr_file, "+");
+                    form_dump_node (node->right, instr_file, false);
+                }
+
+                case MINUS: {
+
+                    form_dump_node (node->left, instr_file, prev_bracket);
+                    fprintf (instr_file, "-");
+                    if (node->right->type == BINARY_OPERATION &&
+                        (node->right->data == PLUS || node->right->data == MINUS)) {
+
+                        fprintf (instr_file, "(");
+                        form_dump_node (node->right, instr_file, true);
+                        fprintf (instr_file, ")");
+
+                    } else {
+
+                        form_dump_node (node->right, instr_file, false);
+                    }
+                }
+
+                case MULT: {
+
+                    bool left_int_brackets = false, right_int_brackets = false;
+                    if (node->left->type == BINARY_OPERATION &&
+                        (node->left->data == PLUS || node->left->data == MINUS)) {
+
+                        left_int_brackets = true;
+                    }
+                    if (node->right->type == BINARY_OPERATION &&
+                        (node->right->data == PLUS || node->right->data == MINUS)) {
+
+                        right_int_brackets = true;
+                    }
+
+                    if (left_int_brackets) {
+
+                        fprintf (instr_file, "(");
+                        form_dump_node (node->left, instr_file, true);
+                        fprintf (instr_file, ")");
+
+                    } else {
+
+                        form_dump_node (node->left, instr_file, prev_bracket);
+                    }
+
+                    if (right_int_brackets == false && node->right->type != VARIABLE) {
+
+                        fprintf (instr_file, "\\cdot");
+                    }
+                    
+                    if (right_int_brackets) {
+
+                        fprintf (instr_file, "(");
+                        form_dump_node (node->right, instr_file, true);
+                        fprintf (instr_file, ")");
+
+                    } else {
+
+                        form_dump_node (node->right, instr_file, false);
+                    }
+                }
+
+                case DIV: {
+
+                    fprintf (instr_file, "\\frac{");
+                    form_dump_node (node->left, instr_file, true);
+                    fprintf (instr_file, "}{");
+                    form_dump_node (node->right, instr_file, true);
+                    fprintf (instr_file, "}");
+                }
+
+                case POW: {
+
+                    if (node->left->type == VARIABLE || node->left->type == CONSTANT) {
+
+                        form_dump_node (node->left, instr_file, false);
+
+                    } else {
+
+                        fprintf (instr_file, "(");
+                        form_dump_node (node->left, instr_file, true);
+                        fprintf (instr_file, ")");
+                    }
+
+                    fprintf (instr_file, "^{");
+                    form_dump_node (node->right, instr_file, true);
+                    fprintf (instr_file, "}");
+                }
+
+                case LOG: {
+
+                    fprintf (instr_file, "\\log_{");
+                    form_dump_node (node->left, instr_file, true);
+                    
+                    if (node->right->type == VARIABLE || node->right->type == CONSTANT) {
+
+                        fprintf (instr_file, "}");
+                        form_dump_node (node->right, instr_file, false);
+
+                    } else {
+
+                        fprintf (instr_file, "}(");
+                        form_dump_node (node->right, instr_file, true);
+                        fprintf (instr_file, ")");
+                    }
+                }
+            } 
+        }
+    }
 }
 
 // bin_node_t *bin_tree_move_keyhole_to (bin_tree_t *tree, bool (*walk_node) (const bin_node_t *)) {      // Это единственная функция, самостоятельно меняющая keyhole
