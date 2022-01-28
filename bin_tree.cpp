@@ -56,13 +56,13 @@ void bin_tree_dtor (bin_tree_t *tree) {
 
 static void free_node (bin_node_t *node) {
 
-    assert (node);
+    if (node == NULL) {
 
-    if (node->right != NULL) {
-
-        free_node (node->right);
-        free_node (node->left);
+        return;
     }
+
+    free_node (node->left);
+    free_node (node->right);
 
     node->data = 0;
     node->right = (bin_node_t *) BINTR_OS_RESERVED_ADDRESS;
@@ -211,97 +211,99 @@ static void free_node (bin_node_t *node) {
 //     }
 // }
 
-// bin_node_t *bin_tree_create_leaf (char *data) {
+bin_node_t *bin_tree_create_leaf (long long data, NODE_TYPE type) {
 
-//     assert (data);
+    bin_node_t *node = (bin_node_t *) calloc (1, sizeof (bin_node_t));
+    node->data = data;
+    node->type = type;
+    node->right = node->left = NULL;
 
-//     bin_node_t *node = (bin_node_t *) calloc (1, sizeof (bin_node_t));
-//     node->data = data;
-//     node->right = node->left = NULL;
+    return node;
+}
 
-//     return node;
-// }
+bin_node_t *bin_tree_add_leaf (bin_tree_t *tree, long long data, NODE_TYPE type) {
 
-// bin_node_t *bin_tree_add_leaf (bin_tree_t *tree, char *data) {
+    assert (tree);
 
-//     assert (tree);
-//     assert (data);
+#ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
 
-// #ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
+    if (bin_tree_verify_qck (tree) != NULL) {
 
-//     if (bin_tree_verify_qck (tree) != NULL) {
+        printf ("\nBinary tree: leaf adding autoverification failed, operation terminated\n");
+        return NULL;
+    }
 
-//         printf ("\nBinary tree: leaf adding autoverification failed, operation terminated\n");
-//         return NULL;
-//     }
+#endif
 
-// #endif
+    if (tree->keyhole == NULL) {
 
-//     if (tree->keyhole == NULL) {
+        if (tree->root != NULL) {
 
-//         if (tree->root != NULL) {
+            return NULL;
+        }
 
-//             return NULL;
-//         }
+        bin_node_t *node = bin_tree_create_leaf (data, type);
+        tree->root = node;
+        return node;
+    }
 
-//         bin_node_t *node = bin_tree_create_leaf (data);
-//         tree->root = node;
-//         return node;
-//     }
+    if (tree->keybranch == true) {
 
-//     if (tree->keyhole->right != NULL) {
+        if (tree->keyhole->right != NULL) {
 
-//         return NULL;
-//     }
+            return NULL;
+        }
 
-//     bin_node_t *node = bin_tree_create_leaf (data);
+        bin_node_t *node = bin_tree_create_leaf (data, type);
+        tree->keyhole->right = node;
+        return node;
 
-//     if (tree->keybranch == true) {
+    } else {
 
-//         tree->keyhole->right = node;
+        if (tree->keyhole->left != NULL) {
 
-//     } else {
+            return NULL;
+        }
 
-//         tree->keyhole->left = node;
-//     }
+        bin_node_t *node = bin_tree_create_leaf (data, type);
+        tree->keyhole->left = node;
+        return node;
+    }
+}
 
-//     return node;
-// }
+bin_node_t *UNSAFE_bin_tree_place_leaf (bin_tree_t *tree, long long data, NODE_TYPE type) {
 
-// bin_node_t *UNSAFE_bin_tree_place_leaf (bin_tree_t *tree, char *data) {
+    assert (tree);
 
-//     assert (tree);
-//     assert (data);
+#ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
 
-// #ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
+    if (bin_tree_verify_qck (tree) != NULL) {
 
-//     if (bin_tree_verify_qck (tree) != NULL) {
+        printf ("\nBinary tree: leaf placement autoverification failed, operation terminated\n");
+        return NULL;
+    }
 
-//         printf ("\nBinary tree: leaf placement autoverification failed, operation terminated\n");
-//         return NULL;
-//     }
+#endif
 
-// #endif
+    bin_node_t *node = bin_tree_create_leaf (data, type);
 
-//     bin_node_t *node = bin_tree_create_leaf (data);
+    if (tree->keyhole == NULL) {
 
-//     if (tree->keyhole == NULL) {
+        tree->root = node;
+        return node;
+    }
 
-//         tree->root = node;
-//         return node;
-//     }
+    if (tree->keybranch == true) {
 
-//     if (tree->keybranch == true) {
+        tree->keyhole->right = node;
 
-//         tree->keyhole->right = node;
+    } else {
 
-//     } else {
+        tree->keyhole->left = node;
+    }
 
-//         tree->keyhole->left = node;
-//     }
-
-//     return node;
-// }
+    return node;
+}
 
 void bin_tree_vis_dump (bin_tree_t *tree, char *file_name) {
 
@@ -352,7 +354,7 @@ static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /*
 
         case UNARY_OPERATION: {
 
-            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> --- }} \"];", ident, OPERATION_SYMB [node->data]);
+            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> --- }} \"];", ident, OPERATION_SYMBS [node->data]);
 
             size_t ident_2 = vis_dump_node (node->left, instr_file, ident + 1);
             fprintf (instr_file, "\n\t%llu:<left> -> %llu:<dat>;", ident, ident + 1);
@@ -362,7 +364,7 @@ static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /*
 
         case BINARY_OPERATION: {
 
-            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> right }} \"];", ident, OPERATION_SYMB [node->data]);
+            fprintf (instr_file, "\n\t%llu [shape=record,label=\" { <dat> %s | { <left> left | <right> right }} \"];", ident, OPERATION_SYMBS [node->data]);
 
             size_t ident_2 = vis_dump_node (node->left, instr_file, ident + 1);
             size_t ident_3 = vis_dump_node (node->right, instr_file, ident_2 + 1);
@@ -455,7 +457,7 @@ static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracke
 
                 fprintf (instr_file, "\\");
             }
-            fprintf (instr_file, "%s", OPERATION_SYMB [node->data]);
+            fprintf (instr_file, "%s", OPERATION_SYMBS [node->data]);
             if (int_brackets) {
 
                 fprintf (instr_file, "(");

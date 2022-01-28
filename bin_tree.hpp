@@ -39,11 +39,11 @@ bin_node_t *bin_tree_verify_slw (bin_tree_t *tree, VERIFICATION_CODES *ver_code 
 void bin_tree_vis_dump (bin_tree_t *tree, char *file_name);
 void bin_tree_form_dump (bin_tree_t *tree, char *file_name);
 
-// bin_node_t *bin_tree_create_leaf (char *data);
+bin_node_t *bin_tree_create_leaf (long long data, NODE_TYPE type);
 // bin_node_t *bin_tree_insert_fork (bin_tree_t *tree, bin_node_t *par_node, bin_node_t *pos_node, bin_node_t *neg_node);
 // bin_node_t *UNSAFE_bin_tree_place_fork (bin_tree_t *tree, bin_node_t *par_node, bin_node_t *pos_node, bin_node_t *neg_node);
 // bin_node_t *bin_tree_split_leaf (bin_tree_t *tree, char *obj_data, char *char_data);
-// bin_node_t *bin_tree_add_leaf (bin_tree_t *tree, char *data);
-// bin_node_t *UNSAFE_bin_tree_place_leaf (bin_tree_t *tree, char *data);
+bin_node_t *bin_tree_add_leaf (bin_tree_t *tree, long long data, NODE_TYPE type);
+bin_node_t *UNSAFE_bin_tree_place_leaf (bin_tree_t *tree, long long data, NODE_TYPE type);
 
 #endif
