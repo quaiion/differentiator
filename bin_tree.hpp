@@ -32,18 +32,24 @@ void bin_tree_dtor (bin_tree_t *tree);
 // bin_node_t *bin_tree_tb_stack_path (bin_tree_t *tree, char *target_name, node_stack_t *stack);
 
 enum VERIFICATION_CODES {DEFAULT, CYCLED, NODE_DISTRUCTED, UN_OP_BRANCH_FAULT, BIN_OP_BRANCH_FAULT,
-                         CONST_BRANCH_FAULT, VAR_BRANCH_FAULT, UN_OP_TYPE_FAULT, BIN_OP_TYPE_FAULT};
+                         CONST_BRANCH_FAULT, VAR_BRANCH_FAULT, UN_OP_TYPE_FAULT, BIN_OP_TYPE_FAULT, 
+                         EXTERNAL_KEYHOLE};
 bin_node_t *bin_tree_verify_qck (bin_tree_t *tree, VERIFICATION_CODES *ver_code = NULL);
 bin_node_t *bin_tree_verify_slw (bin_tree_t *tree, VERIFICATION_CODES *ver_code = NULL);
 
 void bin_tree_vis_dump (bin_tree_t *tree, char *file_name);
 void bin_tree_form_dump (bin_tree_t *tree, char *file_name);
 
+bin_node_t *bin_tree_create_blank_node ();
+bin_node_t *bin_tree_create_node (long long data, NODE_TYPE type, bin_node_t *left, bin_node_t *right);
 bin_node_t *bin_tree_create_leaf (long long data, NODE_TYPE type);
 // bin_node_t *bin_tree_insert_fork (bin_tree_t *tree, bin_node_t *par_node, bin_node_t *pos_node, bin_node_t *neg_node);
 // bin_node_t *UNSAFE_bin_tree_place_fork (bin_tree_t *tree, bin_node_t *par_node, bin_node_t *pos_node, bin_node_t *neg_node);
 // bin_node_t *bin_tree_split_leaf (bin_tree_t *tree, char *obj_data, char *char_data);
 bin_node_t *bin_tree_add_leaf (bin_tree_t *tree, long long data, NODE_TYPE type);
 bin_node_t *UNSAFE_bin_tree_place_leaf (bin_tree_t *tree, long long data, NODE_TYPE type);
+
+bin_tree_t *bin_tree_extract_branch (bin_tree_t *tree);
+bin_node_t *bin_tree_NO_AV_copy_branch (bin_node_t *node);
 
 #endif

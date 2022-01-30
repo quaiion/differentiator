@@ -32,6 +32,7 @@ static bin_tree_t *init_expression_tree (char *expr_buffer);
 static bin_node_t *scan_operation (char **expr_ptr);
 static char *draw_symb_sequence (char *expr_ptr);
 static char *download_buffer (FILE *expression_file);
+static bin_node_t *create_diff_branch (bin_node_t *node);
 
 bin_tree_t *init_expression_tree (char *expr_buffer) {
 
@@ -245,4 +246,324 @@ static char *download_buffer (FILE *expression_file) {
 
     fread (buffer, sizeof (char), file_size, expression_file);
     return buffer;
+}
+
+bin_tree_t *create_diff_expr_tree (bin_tree_t *tree) {
+
+    assert (tree);
+
+#ifdef EXPR_TREE_AUTO_QUICK_VERIFICATION
+
+    if (bin_tree_verify_qck (tree) != NULL) {
+
+        printf ("\nExpression tree: differentiation autoverification failed, operation terminated\n");
+        return NULL;
+    }
+
+#endif
+
+    bin_tree_t diff_tree_ = {};
+    bin_tree_t *diff_tree = &diff_tree_;
+    bin_tree_ctor (diff_tree);
+
+    if (tree->root == NULL) {
+
+        diff_tree->root = NULL;
+
+    } else {
+
+        diff_tree->root = create_diff_branch (tree->root);
+    }
+    
+    return diff_tree;
+}
+
+static bin_node_t *create_diff_branch (bin_node_t *node) {               // Вопрос на будущее - в таком случае лучше сделать как я или избегать свитч в свитче, делая замысел кода менее очевидным?
+
+    bin_node_t *diff_node = bin_tree_create_blank_node ();
+
+    switch (node->type) {
+
+        case CONSTANT: {
+
+            diff_node->type = CONSTANT;
+            diff_node->data = 0;
+            diff_node->left = diff_node->right = NULL;
+
+            break;
+        }
+
+        case VARIABLE: {
+
+            diff_node->type = CONSTANT;
+            diff_node->data = 1;
+            diff_node->left = diff_node->right = NULL;
+
+            break;
+        }
+
+        case UNARY_OPERATION: {
+
+            switch (node->data) {
+
+                case PLUS: {
+
+                    diff_node->type = UNARY_OPERATION;
+                    diff_node->data = PLUS;
+                    diff_node->left = create_diff_branch (node->left);
+                    diff_node->right = NULL;
+
+                    break;
+                }
+
+                case MINUS: {
+
+                    diff_node->type = UNARY_OPERATION;
+                    diff_node->data = MINUS;
+                    diff_node->left = create_diff_branch (node->left);
+                    diff_node->right = NULL;
+
+                    break;
+                }
+
+                case SIN: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    diff_node->left = bin_tree_create_node (COS, UNARY_OPERATION, arg_copy, NULL)
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case COS: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *sin_arg_copy = bin_tree_create_node (SIN, UNARY_OPERATION, arg_copy, NULL);
+                    diff_node->left = bin_tree_create_node (MINUS, UNARY_OPERATION, sin_arg_copy, NULL);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case TAN: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *cos_arg_copy = bin_tree_create_node (COS, UNARY_OPERATION, arg_copy, NULL);
+                    bin_node_t *val_eq_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_cos = bin_tree_create_node (POW, BINARY_OPERATION, cos_arg_copy, val_eq_2);
+                    bin_node_t *val_eq_1 = bin_tree_create_leaf (1, CONSTANT);
+                    diff_node->left = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1, sq_cos);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case COT: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *sin_arg_copy = bin_tree_create_node (SIN, UNARY_OPERATION, arg_copy, NULL);
+                    bin_node_t *val_eq_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_sin = bin_tree_create_node (POW, BINARY_OPERATION, sin_arg_copy, val_eq_2);
+                    bin_node_t *val_eq_1 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *frac_expr = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1, sq_sin);
+                    diff_node->left = bin_tree_create_node (MINUS, UNARY_OPERATION, frac_expr, NULL);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case ASIN: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *val_eq_2_1 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_arg_copy = bin_tree_create_node (POW, BINARY_OPERATION, arg_copy, val_eq_2_1);
+                    bin_node_t *val_eq_1_1 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *one_min_sq = bin_tree_create_node (MINUS, BINARY_OPERATION, val_eq_1_1, sq_arg_copy);
+                    bin_node_t *val_eq_1_2 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *val_eq_2_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *half = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_2, val_eq_2_2);
+                    bin_node_t *sqrt_expr = bin_tree_create_node (POW, BINARY_OPERATION, one_min_sq, half);
+                    bin_node_t *val_eq_1_3 = bin_tree_create_leaf (1, CONSTANT);
+                    diff_node->left = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_3, sqrt_expr);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case ACOS: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *val_eq_2_1 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_arg_copy = bin_tree_create_node (POW, BINARY_OPERATION, arg_copy, val_eq_2_1);
+                    bin_node_t *val_eq_1_1 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *one_min_sq = bin_tree_create_node (MINUS, BINARY_OPERATION, val_eq_1_1, sq_arg_copy);
+                    bin_node_t *val_eq_1_2 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *val_eq_2_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *half = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_2, val_eq_2_2);
+                    bin_node_t *sqrt_expr = bin_tree_create_node (POW, BINARY_OPERATION, one_min_sq, half);
+                    bin_node_t *val_eq_1_3 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *frac_expr = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_3, sqrt_expr);
+                    diff_node->left = bin_tree_create_node (MINUS, UNARY_OPERATION, frac_expr, NULL);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case ATAN: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *val_eq_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_arg_copy = bin_tree_create_node (POW, BINARY_OPERATION, arg_copy, val_eq_2);
+                    bin_node_t *val_eq_1_1 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *one_pl_sq = bin_tree_create_node (PLUS, BINARY_OPERATION, val_eq_1_1, sq_arg_copy);
+                    bin_node_t *val_eq_1_2 = bin_tree_create_leaf (1, CONSTANT);
+                    diff_node->left = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_2, one_pl_sq);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case ACOT: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *val_eq_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *sq_arg_copy = bin_tree_create_node (POW, BINARY_OPERATION, arg_copy, val_eq_2);
+                    bin_node_t *val_eq_1_1 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *one_pl_sq = bin_tree_create_node (PLUS, BINARY_OPERATION, val_eq_1_1, sq_arg_copy);
+                    bin_node_t *val_eq_1_2 = bin_tree_create_leaf (1, CONSTANT);
+                    bin_node_t *frac_expr = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1_2, one_pl_sq);
+                    diff_node->left = bin_tree_create_node (MINUS, UNARY_OPERATION, frac_expr, NULL);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case LN: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+
+                    bin_node_t *arg_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *val_eq_1 = bin_tree_create_leaf (1, CONSTANT);
+                    diff_node->left = bin_tree_create_node (DIV, BINARY_OPERATION, val_eq_1, arg_copy);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+
+                case EXP: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MULT;
+                    diff_node->left = bin_tree_NO_AV_copy_branch (node);
+                    diff_node->right = create_diff_branch (node->left);
+
+                    break;
+                }
+            }
+
+            break;
+        }
+
+        case BINARY_OPERATION: {
+
+            switch (node->data) {
+
+                case PLUS: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = PLUS;
+                    diff_node->left = create_diff_branch (node->left);
+                    diff_node->right = create_diff_branch (node->right);
+
+                    break;
+                }
+
+                case MINUS: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = MINUS;
+                    diff_node->left = create_diff_branch (node->left);
+                    diff_node->right = create_diff_branch (node->right);
+
+                    break;
+                }
+
+                case MULT: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = PLUS;
+
+                    bin_node_t *arg_1_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *arg_2_copy = bin_tree_NO_AV_copy_branch (node->right);
+                    bin_node_t *arg_1_diff = create_diff_branch (node->left);
+                    bin_node_t *arg_2_diff = create_diff_branch (node->right);
+                    diff_node->left = bin_tree_create_node (MULT, BINARY_OPERATION, arg_1_copy, arg_2_diff);
+                    diff_node->right = bin_tree_create_node (MULT, BINARY_OPERATION, arg_2_copy, arg_1_diff);
+
+                    break;
+                }
+
+                case DIV: {
+
+                    diff_node->type = BINARY_OPERATION;
+                    diff_node->data = DIV;
+
+                    bin_node_t *arg_1_copy = bin_tree_NO_AV_copy_branch (node->left);
+                    bin_node_t *arg_2_copy_1 = bin_tree_NO_AV_copy_branch (node->right);
+                    bin_node_t *arg_1_diff = create_diff_branch (node->left);
+                    bin_node_t *arg_2_diff = create_diff_branch (node->right);
+                    bin_node_t *minuend = bin_tree_create_node (MULT, BINARY_OPERATION, arg_1_diff, arg_2_copy_1);
+                    bin_node_t *subtrahend = bin_tree_create_node (MULT, BINARY_OPERATION, arg_1_copy, arg_2_diff);
+                    diff_node->left = bin_tree_create_node (MINUS, BINARY_OPERATION, minuend, subtrahend);
+                    bin_node_t *val_eq_2 = bin_tree_create_leaf (2, CONSTANT);
+                    bin_node_t *arg_2_copy_2 = bin_tree_NO_AV_copy_branch (node->right);
+                    diff_node->right = bin_tree_create_node (POW, BINARY_OPERATION, arg_2_copy_2, val_eq_2);
+
+                    break;
+                }
+
+                case POW: {
+
+                    
+
+                    break;
+                }
+
+                case LOG: {
+
+
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
+    return diff_node;
 }
