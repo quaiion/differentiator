@@ -16,3 +16,5 @@ bin_tree_t *create_diff_expr_tree (bin_tree_t *tree);
 void optimize_expr_tree (bin_tree_t *tree);
 
 #endif
+
+// TODO: добавить макровставки в частные верификаторы

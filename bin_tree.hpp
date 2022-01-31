@@ -34,8 +34,8 @@ enum VERIFICATION_CODES {DEFAULT, CYCLED, NODE_DISTRUCTED, UN_OP_BRANCH_FAULT, B
 bin_node_t *bin_tree_verify_qck (bin_tree_t *tree, VERIFICATION_CODES *ver_code = NULL);
 bin_node_t *bin_tree_verify_slw (bin_tree_t *tree, VERIFICATION_CODES *ver_code = NULL);
 
-void bin_tree_vis_dump (bin_tree_t *tree, char *file_name);
-void bin_tree_form_dump (bin_tree_t *tree, char *file_name);
+void bin_tree_vis_dump (bin_tree_t *tree, const char *file_name);
+void bin_tree_form_dump (bin_tree_t *tree, const char *file_name);
 
 bin_node_t *bin_tree_create_blank_node ();
 bin_node_t *bin_tree_create_node (long long data, NODE_TYPE type, bin_node_t *left, bin_node_t *right);

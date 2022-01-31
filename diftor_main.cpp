@@ -3,8 +3,9 @@
 
 int main () {
 
-    // bin_tree_t *init_expr_tree = load_expression ();
-    // bin_tree_vis_dump (init_expr_tree, "dump1.png");
+    bin_tree_t *init_expr_tree = load_expression ();
+    bin_tree_vis_dump (init_expr_tree, "dump1.png");
+
     // bin_tree_form_dump (init_expr_tree, "dump1.pdf");
 
     // optimize_expr_tree (init_expr_tree);
@@ -19,7 +20,7 @@ int main () {
     // bin_tree_vis_dump (init_expr_tree, "dump4.png");
     // bin_tree_form_dump (init_expr_tree, "dump4.pdf");
 
-    // bin_tree_dtor (init_expr_tree);
+    bin_tree_dtor (init_expr_tree);
     // bin_tree_dtor (diff_expr_tree);
 
     return 0;

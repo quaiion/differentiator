@@ -1,24 +1,25 @@
 #include "diftor.hpp"
 
-#define FUNC_SECURITY(identificator, node, condition)                           \
-    do {                                                                        \
-                                                                                \
-        if (condition(identificator)) {                                         \
-                                                                                \
-            printf ("Tree formation failed: impossible expression sequence");   \
-            free (node);                                                        \
-            return NULL;                                                        \
-        }                                                                       \
+#define FUNC_SECURITY(identificator, node, condition)                                           \
+    do {                                                                                        \
+                                                                                                \
+        if (condition(identificator)) {                                                         \
+                                                                                                \
+            printf ("\nTree formation failed: impossible expression sequence (%d, %s, %s)\n",   \
+                    __LINE__, __PRETTY_FUNCTION__, __FILE__);                                   \
+            bin_tree_free_branch (node);                                                        \
+            return NULL;                                                                        \
+        }                                                                                       \
     } while (0)
 
-#define TREE_COLLAPSE(identificator, node)                                      \
-    do {                                                                        \
-                                                                                \
-        if (identificator == NULL) {                                            \
-                                                                                \
-            free (node);                                                        \
-            return NULL;                                                        \
-        }                                                                       \
+#define TREE_COLLAPSE(identificator, node)                                                      \
+    do {                                                                                        \
+                                                                                                \
+        if (identificator == NULL) {                                                            \
+                                                                                                \
+            bin_tree_free_branch (node); /* Возможно достаточно почистить ноду */               \
+            return NULL;                                                                        \
+        }                                                                                       \
     } while (0)
 
 #define LEFT_ROUND_BRAC(pptr) **pptr != '('
@@ -28,7 +29,7 @@
 #define UNKNOWN_OPERATION(identificator) identificator == -1
 #define SEQUENCE_MAX_EXCEEDED(ptr) ptr == NULL
 
-static bin_tree_t *init_expression_tree (char *expr_buffer);
+static bin_tree_t *init_expression_tree (char * const expr_buffer);
 static bin_node_t *scan_operation (char **expr_ptr);
 static char *draw_symb_sequence (char **expr_ptr);
 static char *download_buffer (FILE *expression_file);
@@ -39,14 +40,22 @@ static void suppress_right_branch_to_constant (bin_node_t *node, long long cnst)
 static void pull_up_left_branch (bin_node_t *node);
 static void pull_up_right_branch (bin_node_t *node);
 
-bin_tree_t *init_expression_tree (char *expr_buffer) {
+static bin_tree_t *init_expression_tree (char * const expr_buffer) {
 
     bin_tree_t tree_ = {};
     bin_tree_t *tree = &tree_;
     bin_tree_ctor (tree);
     
     char *expr_ptr = expr_buffer;
+    FUNC_SECURITY (&expr_ptr, tree->root, LEFT_ROUND_BRAC);
+    expr_ptr += 1;
     tree->root = scan_operation (&expr_ptr);
+
+    if (tree->root != NULL) {
+
+        FUNC_SECURITY (&expr_ptr, tree->root, RIGHT_ROUND_BRAC);
+    }
+
     if (tree->root == NULL) {
 
         return NULL;
@@ -64,13 +73,12 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
         if (isdigit (**p_expr_ptr)) {
 
             node->data = atoll (*p_expr_ptr);
-            *p_expr_ptr += num_of_digits_llint (node->data);
-
-            FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
-            *p_expr_ptr += 1;
             node->type = CONSTANT;
             node->left = NULL;
             node->right = NULL;
+            
+            *p_expr_ptr += num_of_digits_llint (node->data);
+            printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
             return node;
 
         } else {
@@ -83,7 +91,8 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
                 free (symb_seq);
                 if (**p_expr_ptr != '+' && **p_expr_ptr != '-') {
 
-                    printf ("Tree formation failed: impossible expression sequence");
+                    printf ("\nTree formation failed: impossible expression sequence (%d, %s, %s)\n",
+                            __LINE__, __PRETTY_FUNCTION__, __FILE__);
                     free (node);
                     return NULL;
 
@@ -97,46 +106,41 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
 
                         node->data = MINUS;
                     }
+
                     FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
                     *p_expr_ptr += 1;
-
                     node->left = scan_operation (p_expr_ptr);
+                    FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
                     TREE_COLLAPSE (node->left, node);
                     node->right = NULL;
                     node->type = UNARY_OPERATION;
+
+                    *p_expr_ptr += 1;
+                    printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
+                    return node;
                 }
-
-                FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
-                *p_expr_ptr += 1;
-
-                return node;
             }
             if (symb_seq [1] == '\0') {
 
                 node->data = (long long) symb_seq [0];
-                free (symb_seq);
-
-                FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
-                *p_expr_ptr += 1;
-
                 node->right = NULL;
                 node->left = NULL;
                 node->type = VARIABLE;
+
+                free (symb_seq);
+                printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
                 return node;
             }
             
             node->data = str_lin_search (OPERATION_SYMBS, NUM_OF_UNARY_OPERATIONS + NUM_OF_BINARY_OPERATIONS, symb_seq);
-            free (symb_seq);
             FUNC_SECURITY (node->data, node, UNKNOWN_OPERATION);
-            FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
-            *p_expr_ptr += 1;
 
             if (node->data == LOG) {
 
                 node->type = BINARY_OPERATION;
+
                 FUNC_SECURITY (p_expr_ptr, node, LEFT_SQUARE_BRAC);
                 *p_expr_ptr += 1;
-
                 node->left = scan_operation (p_expr_ptr);
                 TREE_COLLAPSE (node->left, node);
                 FUNC_SECURITY (p_expr_ptr, node, RIGHT_SQUARE_BRAC);
@@ -144,27 +148,31 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
 
                 FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
                 *p_expr_ptr += 1;
-
                 node->right = scan_operation (p_expr_ptr);
                 TREE_COLLAPSE (node->right, node);
                 FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
-                *p_expr_ptr += 1;
 
+                free (symb_seq);
+                *p_expr_ptr += 1;
+                printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
                 return node;
             }
 
-            node->type = UNARY_OPERATION;
-            node->left = scan_operation (p_expr_ptr);
-            TREE_COLLAPSE (node->left, node);
-            node->right = NULL;
-
-            FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
+            FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
             *p_expr_ptr += 1;
+            node->left = scan_operation (p_expr_ptr);
+            node->right = NULL;
+            node->type = UNARY_OPERATION;
+            TREE_COLLAPSE (node->left, node);
+            FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
 
+            free (symb_seq);
+            *p_expr_ptr += 1;
+            printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
             return node;
         }
     }
-
+    
     node->type = BINARY_OPERATION;
     *p_expr_ptr += 1;
 
@@ -183,6 +191,7 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
     FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
     *p_expr_ptr += 1;
 
+    printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
     return node;
 }
 
@@ -239,7 +248,18 @@ bin_tree_t *load_expression () {
     fclose (expression_file);
 
     bin_tree_t *tree = init_expression_tree (buffer);
+
+//
+//
+// вот тут жесть какая-то творится
+//
+    printf ("\nroot %d\t%lld\nleft %d\t%lld\nright %d\t%lld\n", tree->root->type, tree->root->data, tree->root->left->type, tree->root->left->data, tree->root->right->type, tree->root->right->data);
     free (buffer);
+    printf ("\nroot %d\t%lld\nleft %d\t%lld\nright %d\t%lld\n", tree->root->type, tree->root->data, tree->root->left->type, tree->root->left->data, tree->root->right->type, tree->root->right->data);
+//
+//
+//
+//
 
     return tree;
 }
@@ -247,7 +267,7 @@ bin_tree_t *load_expression () {
 static char *download_buffer (FILE *expression_file) {
 
     size_t file_size = get_file_size (expression_file);
-    char *buffer = (char *) malloc ((file_size + 1) * sizeof (char));
+    char *buffer = (char *) calloc ((file_size + 1), sizeof (char));
 
     fread (buffer, sizeof (char), file_size, expression_file);
     return buffer;

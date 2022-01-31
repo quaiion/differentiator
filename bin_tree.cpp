@@ -82,7 +82,7 @@ bin_node_t *bin_tree_create_leaf (long long data, NODE_TYPE type) {
     return node;
 }
 
-void bin_tree_vis_dump (bin_tree_t *tree, char *file_name) {
+void bin_tree_vis_dump (bin_tree_t *tree, const char *file_name) {
 
     assert (tree);
     assert (file_name);
@@ -161,7 +161,7 @@ static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /*
     return 0;
 }
 
-void bin_tree_form_dump (bin_tree_t *tree, char *file_name) {
+void bin_tree_form_dump (bin_tree_t *tree, const char *file_name) {
 
     assert (tree);
     assert (file_name);
