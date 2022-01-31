@@ -11,15 +11,8 @@
 
 constexpr int MAX_SYMB_SEQUNCE = 6;
 
-bin_tree_t *init_expression_tree (char *expr_buffer);
 bin_tree_t *load_expression ();
 bin_tree_t *create_diff_expr_tree (bin_tree_t *tree);
+void optimize_expr_tree (bin_tree_t *tree);
 
 #endif
-
-/*
-
-корни, квадраты в ранней подписи
-обработка ошибок при формировании дерева
-
-*/

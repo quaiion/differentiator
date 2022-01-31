@@ -11,8 +11,8 @@ const char * const OPERATION_SYMBS [] = {"+" /* PLUS */, "-" /* MINUS */, "*" /*
                                         "tan" /* TAN */, "cot" /* COT */, "arcsin" /* ASIN */, "arccos" /* ACOS */,
                                         "arctan" /* ATAN */, "arccot" /* ACOT */, "ln" /* LN */, "exp" /* EXP */};
 
-OPERATION_TYPE UNARY_OPERATIONS [] = {PLUS, MINUS, SIN, COS, TAN, COT, ASIN, ACOS, ATAN, ACOT, LN, EXP};
-OPERATION_TYPE BINARY_OPERATIONS [] = {PLUS, MINUS, MULT, DIV, LOG, POW};
+const int UNARY_OPERATIONS [] = {PLUS, MINUS, SIN, COS, TAN, COT, ASIN, ACOS, ATAN, ACOT, LN, EXP};
+const int BINARY_OPERATIONS [] = {PLUS, MINUS, MULT, DIV, LOG, POW};
 constexpr int NUM_OF_UNARY_OPERATIONS = 12;
 constexpr int NUM_OF_BINARY_OPERATIONS = 6;
 

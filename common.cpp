@@ -1,5 +1,7 @@
 #include "common.hpp"
 
+static long long eu_mod (long long val_1, long long val_2);
+
 size_t get_file_size (FILE* const file_in) {
 
     assert (file_in);
@@ -28,7 +30,7 @@ int int_lin_search (const int *arr, int len, int elem) {
     return -1;
 }
 
-int str_lin_search (const char * const arr, int len, const char *elem) {
+int str_lin_search (const char * const *arr, int len, const char *elem) {
 
     assert (arr);
     assert (len >= 0);
@@ -45,7 +47,7 @@ int str_lin_search (const char * const arr, int len, const char *elem) {
     return -1;
 }
 
-int first_symb_str_lin_search (const char * const arr, int len, const char elem) {
+int first_symb_str_lin_search (const char * const *arr, int len, const char elem) {
 
     assert (arr);
     assert (len >= 0);
@@ -86,4 +88,47 @@ void flush_input_buffer (char symb_inserted) {
 
         while (getchar () != '\n') ;
     }
+}
+
+long long int_abs (long long val) { return (val < 0) ? -val : val; }
+
+static long long eu_mod (long long val_1, long long val_2) {
+
+    assert (val_2 != 0);
+
+    long long r = val_1 % val_2;
+    if (r < 0) {
+        
+        r += int_abs (val_2);
+    }
+
+    return r;
+}
+
+long long find_gcd (long long val_1, long long val_2) {
+
+    assert (val_2 != 0);
+
+    long long mod = eu_mod (val_1, val_2);
+    while (mod != 0) {
+
+        val_1 = val_2;
+        val_2 = mod;
+        mod = eu_mod (val_1, val_2);
+    }
+
+    return val_2;
+}
+
+long long find_positive_pow (long long bas, long long pow) {
+
+    assert (pow >= 0);
+
+    long long res = 1;
+    for (int i = 0; i < pow; ++i) {
+
+        res *= bas;
+    }
+
+    return res;
 }
