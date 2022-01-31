@@ -42,8 +42,7 @@ static void pull_up_right_branch (bin_node_t *node);
 
 static bin_tree_t *init_expression_tree (char * const expr_buffer) {
 
-    bin_tree_t tree_ = {};
-    bin_tree_t *tree = &tree_;
+    bin_tree_t *tree = (bin_tree_t *) calloc (1, sizeof (bin_tree_t));
     bin_tree_ctor (tree);
     
     char *expr_ptr = expr_buffer;
@@ -78,7 +77,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
             node->right = NULL;
             
             *p_expr_ptr += num_of_digits_llint (node->data);
-            printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
             return node;
 
         } else {
@@ -116,7 +114,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
                     node->type = UNARY_OPERATION;
 
                     *p_expr_ptr += 1;
-                    printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
                     return node;
                 }
             }
@@ -128,7 +125,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
                 node->type = VARIABLE;
 
                 free (symb_seq);
-                printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
                 return node;
             }
             
@@ -154,7 +150,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
 
                 free (symb_seq);
                 *p_expr_ptr += 1;
-                printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
                 return node;
             }
 
@@ -168,7 +163,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
 
             free (symb_seq);
             *p_expr_ptr += 1;
-            printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
             return node;
         }
     }
@@ -191,7 +185,6 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
     FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
     *p_expr_ptr += 1;
 
-    printf ("%d\t%lld\n", node->type, node->data);              // тут техпечать
     return node;
 }
 
@@ -249,18 +242,7 @@ bin_tree_t *load_expression () {
 
     bin_tree_t *tree = init_expression_tree (buffer);
 
-//
-//
-// вот тут жесть какая-то творится
-//
-    printf ("\nroot %d\t%lld\nleft %d\t%lld\nright %d\t%lld\n", tree->root->type, tree->root->data, tree->root->left->type, tree->root->left->data, tree->root->right->type, tree->root->right->data);
     free (buffer);
-    printf ("\nroot %d\t%lld\nleft %d\t%lld\nright %d\t%lld\n", tree->root->type, tree->root->data, tree->root->left->type, tree->root->left->data, tree->root->right->type, tree->root->right->data);
-//
-//
-//
-//
-
     return tree;
 }
 
@@ -287,8 +269,7 @@ bin_tree_t *create_diff_expr_tree (bin_tree_t *tree) {
 
 #endif
 
-    bin_tree_t diff_tree_ = {};
-    bin_tree_t *diff_tree = &diff_tree_;
+    bin_tree_t *diff_tree = (bin_tree_t *) calloc (1, sizeof (bin_tree_t));
     bin_tree_ctor (diff_tree);
 
     if (tree->root == NULL) {

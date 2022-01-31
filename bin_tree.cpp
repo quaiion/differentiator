@@ -89,9 +89,10 @@ void bin_tree_vis_dump (bin_tree_t *tree, const char *file_name) {
 
 #ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
 
-    if (bin_tree_verify_qck (tree) != NULL) {
+    VERIFICATION_CODES ver_code = DEFAULT;
+    if (bin_tree_verify_qck (tree, &ver_code) != NULL) {
 
-        printf ("\nBinary tree: visual dump autoverification failed, operation terminated\n");
+        printf ("\nBinary tree: visual dump autoverification failed, operation terminated, ver_code %d\n", ver_code);
         return;
     }
 
@@ -119,13 +120,13 @@ static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /*
 
         case CONSTANT: {
 
-            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"yellow\",label=\" { <dat> %lld } \"];", ident, node->data);
+            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"yellow\",label=\"%lld\"];", ident, node->data);
             return ident;
         }
 
         case VARIABLE: {
 
-            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"orange\",label=\" { <dat> %c } \"];", ident, (int) node->data);
+            fprintf (instr_file, "\n\t%llu [shape=\"egg\",style=\"filled\",fillcolor=\"orange\",label=\"%c\"];", ident, (int) node->data);
             return ident;
         }
 
@@ -145,8 +146,8 @@ static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /*
 
             size_t ident_2 = vis_dump_node (node->left, instr_file, ident + 1);
             size_t ident_3 = vis_dump_node (node->right, instr_file, ident_2 + 1);
-            fprintf (instr_file, "\n\t%llu:<left> -> %llu:<dat>;", ident, ident + 1);
-            fprintf (instr_file, "\n\t%llu:<right> -> %llu:<dat>;", ident, ident_2 + 1);
+            fprintf (instr_file, "\n\t%llu:<left> -> %llu;", ident, ident + 1);
+            fprintf (instr_file, "\n\t%llu:<right> -> %llu;", ident, ident_2 + 1);
 
             return ident_3;
         }
