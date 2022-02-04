@@ -1,9 +1,13 @@
+#define BASH_COMPILATION
+// #define WINCMD_COMPILATION
+
 #ifndef AKINATOR_COMMON_ACTIVE
 #define AKINATOR_COMMON_ACTIVE
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define OS_RESERVED_ADDRESS 1
 #define STRINGS_EQUAL 0

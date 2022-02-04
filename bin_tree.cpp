@@ -33,6 +33,7 @@ void bin_tree_dtor (bin_tree_t *tree) {
     bin_tree_free_branch (tree->root);
     tree->root = (bin_node_t *) BINTR_OS_RESERVED_ADDRESS;
     tree->keyhole = (bin_node_t *) BINTR_OS_RESERVED_ADDRESS;
+    free (tree);
 }
 
 void bin_tree_free_branch (bin_node_t *node) {
@@ -108,7 +109,14 @@ void bin_tree_vis_dump (bin_tree_t *tree, const char *file_name) {
     sprintf (cmd, "dot -Tpng vis_instr.gv -o %s", file_name);
     system (cmd);
     free (cmd);
+
+#ifdef WINCMD_COMPILATION
     system ("del vis_instr.gv");
+#endif
+
+#ifdef BASH_COMPILATION
+    system ("rm vis_instr.gv");
+#endif
 }
 
 static size_t vis_dump_node (bin_node_t *node, FILE *instr_file, size_t ident /* = 0 */) {      // Функция получает на вход НОМЕР текущего шага рекурсии (т.е. НАИМЕНЬШИЙ незанятый идентификатор), возвращает НАИБОЛЬШИЙ занятый идентификатор
@@ -183,14 +191,24 @@ void bin_tree_form_dump (bin_tree_t *tree, const char *file_name) {
     fprintf (instr_file, "\n\\end{displaymath}\n\\end{document}\n");
     fclose (instr_file);
 
-    char *ren_cmd = (char *) calloc (MAX_FILE_NAME + 24, sizeof (char));
-    sprintf (ren_cmd, "ren form_instr.pdf %s", file_name);
-
     system ("latex form_instr.tex");
     system ("dvipdfm form_instr.dvi");
+
+#ifdef WINCMD_COMPILATION
+    char *ren_cmd = (char *) calloc (MAX_FILE_NAME + 24, sizeof (char));
+    sprintf (ren_cmd, "ren form_instr.pdf %s", file_name);
     system ("del form_instr.dvi form_instr.aux form_instr.log form_instr.tex");
     system (ren_cmd);
     free (ren_cmd);
+#endif
+
+#ifdef BASH_COMPILATION
+    char *ren_cmd = (char *) calloc (MAX_FILE_NAME + 23, sizeof (char));
+    sprintf (ren_cmd, "mv form_instr.pdf %s", file_name);
+    system ("rm form_instr.dvi form_instr.aux form_instr.log form_instr.tex");
+    system (ren_cmd);
+    free (ren_cmd);
+#endif
 }
 
 static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracket) {

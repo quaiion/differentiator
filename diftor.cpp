@@ -1,44 +1,41 @@
 #include "diftor.hpp"
 
-#define FUNC_SECURITY(identificator, node, condition)                                           \
-    do {                                                                                        \
-                                                                                                \
-        if (condition(identificator)) {                                                         \
-                                                                                                \
-            printf ("\nTree formation failed: impossible expression sequence (%d, %s, %s)\n",   \
-                    __LINE__, __PRETTY_FUNCTION__, __FILE__);                                   \
-            bin_tree_free_branch (node);                                                        \
-            return NULL;                                                                        \
-        }                                                                                       \
-    } while (0)
-
-#define TREE_COLLAPSE(identificator, node)                                                      \
-    do {                                                                                        \
-                                                                                                \
-        if (identificator == NULL) {                                                            \
-                                                                                                \
-            bin_tree_free_branch (node); /* Возможно достаточно почистить ноду */               \
-            return NULL;                                                                        \
-        }                                                                                       \
-    } while (0)
-
-#define LEFT_ROUND_BRAC(pptr) **pptr != '('
-#define RIGHT_ROUND_BRAC(pptr) **pptr != ')'
-#define LEFT_SQUARE_BRAC(pptr) **pptr != '['
-#define RIGHT_SQUARE_BRAC(pptr) **pptr != ']'
-#define UNKNOWN_OPERATION(identificator) identificator == -1
-#define SEQUENCE_MAX_EXCEEDED(ptr) ptr == NULL
-
 static bin_tree_t *init_expression_tree (char * const expr_buffer);
 static bin_node_t *scan_operation (char **expr_ptr);
 static char *draw_symb_sequence (char **expr_ptr);
 static char *download_buffer (FILE *expression_file);
 static bin_node_t *create_diff_branch (bin_node_t *node);
 static void optimize_expr_branch (bin_node_t *node);
+
 static void suppress_left_branch_to_constant (bin_node_t *node, long long cnst);
 static void suppress_right_branch_to_constant (bin_node_t *node, long long cnst);
 static void pull_up_left_branch (bin_node_t *node);
 static void pull_up_right_branch (bin_node_t *node);
+
+static int func_secure_lrb (char **pptr);
+static int func_secure_rrb (char **pptr);
+static int func_secure_lsb (char **pptr);
+static int func_secure_rsb (char **pptr);
+static int func_secure_uo (long long id);
+static int func_secure_mse (char *pptr);
+static int func_secure_pm (char **pptr);
+
+#define NO_LEFT_ROUND_BRAC(pptr) **pptr != '('
+#define NO_RIGHT_ROUND_BRAC(pptr) **pptr != ')'
+#define NO_LEFT_SQUARE_BRAC(pptr) **pptr != '['
+#define NO_RIGHT_SQUARE_BRAC(pptr) **pptr != ']'
+#define UNKNOWN_OPERATION(identificator) identificator == -1
+#define SEQUENCE_MAX_EXCEEDED(ptr) ptr == NULL
+#define NOT_A_UN_PLUS_OR_MINUS(pptr) **pptr != '+' && **pptr != '-'
+#define BRANCH_COLLAPSED(node_ptr) node_ptr == NULL
+
+#define PRINT_ERROR                                                                         \
+    do {                                                                                    \
+                                                                                            \
+        printf ("\nTree formation failed: impossible expression sequence (%d, %s, %s)\n",   \
+                __LINE__, __PRETTY_FUNCTION__, __FILE__);                                   \
+                                                                                            \
+    } while (0)
 
 static bin_tree_t *init_expression_tree (char * const expr_buffer) {
 
@@ -46,16 +43,25 @@ static bin_tree_t *init_expression_tree (char * const expr_buffer) {
     bin_tree_ctor (tree);
     
     char *expr_ptr = expr_buffer;
-    FUNC_SECURITY (&expr_ptr, tree->root, LEFT_ROUND_BRAC);
+    if (!func_secure_lrb (&expr_ptr)) {
+
+        PRINT_ERROR;
+        bin_tree_free_branch (tree->root);
+        return NULL;
+    }
     expr_ptr += 1;
     tree->root = scan_operation (&expr_ptr);
 
     if (tree->root != NULL) {
 
-        FUNC_SECURITY (&expr_ptr, tree->root, RIGHT_ROUND_BRAC);
-    }
+        if (!func_secure_rrb (&expr_ptr)) {
 
-    if (tree->root == NULL) {
+            PRINT_ERROR;
+            bin_tree_free_branch (tree->root);
+            return NULL;
+        }
+
+    } else {
 
         return NULL;
     }
@@ -82,40 +88,56 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
         } else {
 
             char *symb_seq = draw_symb_sequence (p_expr_ptr);
-            FUNC_SECURITY (symb_seq, node, SEQUENCE_MAX_EXCEEDED);
+            if (!func_secure_mse (symb_seq)) {
+
+                PRINT_ERROR;
+                bin_tree_free_branch (node);
+                return NULL;
+            }
 
             if (symb_seq [0] == '\0') {
 
                 free (symb_seq);
-                if (**p_expr_ptr != '+' && **p_expr_ptr != '-') {
+                if (!func_secure_pm (p_expr_ptr)) {
 
-                    printf ("\nTree formation failed: impossible expression sequence (%d, %s, %s)\n",
-                            __LINE__, __PRETTY_FUNCTION__, __FILE__);
-                    free (node);
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
                     return NULL;
+                }
+
+                if (*(*p_expr_ptr)++ == '+') {
+
+                    node->data = PLUS;
 
                 } else {
 
-                    if (*(*p_expr_ptr)++ == '+') {
-
-                        node->data = PLUS;
-
-                    } else {
-
-                        node->data = MINUS;
-                    }
-
-                    FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
-                    *p_expr_ptr += 1;
-                    node->left = scan_operation (p_expr_ptr);
-                    FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
-                    TREE_COLLAPSE (node->left, node);
-                    node->right = NULL;
-                    node->type = UNARY_OPERATION;
-
-                    *p_expr_ptr += 1;
-                    return node;
+                    node->data = MINUS;
                 }
+
+                if (!func_secure_lrb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
+                *p_expr_ptr += 1;
+                node->left = scan_operation (p_expr_ptr);
+                if (!func_secure_rrb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
+                if (BRANCH_COLLAPSED(node->left)) {
+
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
+                node->right = NULL;
+                node->type = UNARY_OPERATION;
+
+                *p_expr_ptr += 1;
+                return node;
             }
             if (symb_seq [1] == '\0') {
 
@@ -129,37 +151,84 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
             }
             
             node->data = str_lin_search (OPERATION_SYMBS, NUM_OF_UNARY_OPERATIONS + NUM_OF_BINARY_OPERATIONS, symb_seq);
-            FUNC_SECURITY (node->data, node, UNKNOWN_OPERATION);
+            if (!func_secure_uo (node->data)) {
+
+                PRINT_ERROR;
+                bin_tree_free_branch (node);
+                return NULL;
+            }
 
             if (node->data == LOG) {
 
                 node->type = BINARY_OPERATION;
 
-                FUNC_SECURITY (p_expr_ptr, node, LEFT_SQUARE_BRAC);
+                if (!func_secure_lsb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
                 *p_expr_ptr += 1;
                 node->left = scan_operation (p_expr_ptr);
-                TREE_COLLAPSE (node->left, node);
-                FUNC_SECURITY (p_expr_ptr, node, RIGHT_SQUARE_BRAC);
+                if (BRANCH_COLLAPSED (node->left)) {
+
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
+                if (!func_secure_rsb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
                 *p_expr_ptr += 1;
 
-                FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
+                if (!func_secure_lrb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
                 *p_expr_ptr += 1;
                 node->right = scan_operation (p_expr_ptr);
-                TREE_COLLAPSE (node->right, node);
-                FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
+                if (BRANCH_COLLAPSED (node->right)) {
+
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
+                if (!func_secure_rrb (p_expr_ptr)) {
+
+                    PRINT_ERROR;
+                    bin_tree_free_branch (node);
+                    return NULL;
+                }
 
                 free (symb_seq);
                 *p_expr_ptr += 1;
                 return node;
             }
 
-            FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
+            if (!func_secure_lrb (p_expr_ptr)) {
+
+                PRINT_ERROR;
+                bin_tree_free_branch (node);
+                return NULL;
+            }
             *p_expr_ptr += 1;
             node->left = scan_operation (p_expr_ptr);
             node->right = NULL;
             node->type = UNARY_OPERATION;
-            TREE_COLLAPSE (node->left, node);
-            FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
+            if (BRANCH_COLLAPSED (node->left)) {
+
+                bin_tree_free_branch (node);
+                return NULL;
+            }
+            if (!func_secure_rrb (p_expr_ptr)) {
+
+                PRINT_ERROR;
+                bin_tree_free_branch (node);
+                return NULL;
+            }
 
             free (symb_seq);
             *p_expr_ptr += 1;
@@ -171,18 +240,46 @@ static bin_node_t *scan_operation (char **p_expr_ptr) {
     *p_expr_ptr += 1;
 
     node->left = scan_operation (p_expr_ptr);
-    TREE_COLLAPSE (node->left, node);
-    FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
+    if (BRANCH_COLLAPSED (node->left)) {
+
+        bin_tree_free_branch (node);
+        return NULL;
+    }
+    if (!func_secure_rrb (p_expr_ptr)) {
+
+        PRINT_ERROR;
+        bin_tree_free_branch (node);
+        return NULL;
+    }
     *p_expr_ptr += 1;
 
     node->data = first_symb_str_lin_search (OPERATION_SYMBS, NUM_OF_UNARY_OPERATIONS + NUM_OF_BINARY_OPERATIONS, *(*p_expr_ptr)++);
-    FUNC_SECURITY (node->data, node, UNKNOWN_OPERATION);
-    FUNC_SECURITY (p_expr_ptr, node, LEFT_ROUND_BRAC);
+    if (!func_secure_uo (node->data)) {
+
+        PRINT_ERROR;
+        bin_tree_free_branch (node);
+        return NULL;
+    }
+    if (!func_secure_lrb (p_expr_ptr)) {
+
+        PRINT_ERROR;
+        bin_tree_free_branch (node);
+        return NULL;
+    }
     *p_expr_ptr += 1;
 
     node->right = scan_operation (p_expr_ptr);
-    TREE_COLLAPSE (node->right, node);
-    FUNC_SECURITY (p_expr_ptr, node, RIGHT_ROUND_BRAC);
+    if (BRANCH_COLLAPSED (node->right)) {
+
+        bin_tree_free_branch (node);
+        return NULL;
+    }
+    if (!func_secure_rrb (p_expr_ptr)) {
+
+        PRINT_ERROR;
+        bin_tree_free_branch (node);
+        return NULL;
+    }
     *p_expr_ptr += 1;
 
     return node;
@@ -688,27 +785,12 @@ static void optimize_expr_branch (bin_node_t *node) {
 
             switch (node->data) {
 
-            //
-            //
-            // Вопрос на засыпку - можно ли этот сегмент слить в один кейс?
-            //
-
-                case PLUS: {
-
-                    pull_up_left_branch (node);
-                    return;
-                }
-
+                case PLUS:
                 case MINUS: {
 
                     pull_up_left_branch (node);
                     return;
                 }
-
-            //
-            //
-            //
-            //
 
                 case MULT: {
 
@@ -759,33 +841,13 @@ static void optimize_expr_branch (bin_node_t *node) {
 
             switch (node->data) {
 
-            //
-            //
-            //
-            //
-
+                case MULT:
+                case DIV:
                 case POW: {
 
                     suppress_right_branch_to_constant (node, 0);
                     return;
                 }
-
-                case MULT: {
-
-                    suppress_right_branch_to_constant (node, 0);
-                    return;
-                }
-
-                case DIV: {
-
-                    suppress_right_branch_to_constant (node, 0);
-                    return;
-                }
-
-            //
-            //
-            //
-            //
 
                 case PLUS: {
 
@@ -874,12 +936,83 @@ static void pull_up_right_branch (bin_node_t *node) {
     bin_tree_free_node (temp);
 }
 
+static int func_secure_lrb (char **pptr) {
 
-#undef FUNC_SECURITY
-#undef TREE_COLLAPSE
-#undef LEFT_ROUND_BRAC
-#undef RIGHT_ROUND_BRAC
-#undef LEFT_SQUARE_BRAC
-#undef RIGHT_SQUARE_BRAC
+    if (NO_LEFT_ROUND_BRAC (pptr)) {
+
+        return 0;
+
+    } else {
+
+        return 1;
+    }
+}
+
+static int func_secure_rrb (char **pptr) {
+
+    if (NO_RIGHT_ROUND_BRAC (pptr)) {
+
+        return 0;
+    }
+
+    return 1;
+}
+
+static int func_secure_lsb (char **pptr) {
+
+    if (NO_LEFT_SQUARE_BRAC (pptr)) {
+
+        return 0;
+    }
+
+    return 1;
+}
+
+static int func_secure_rsb (char **pptr) {
+
+    if (NO_RIGHT_SQUARE_BRAC (pptr)) {
+
+        return 0;
+    }
+    
+    return 1;
+}
+
+static int func_secure_uo (long long id) {
+
+    if (UNKNOWN_OPERATION (id)) {
+
+        return 0;
+    }
+    
+    return 1;
+}
+
+static int func_secure_mse (char *ptr) {
+
+    if (SEQUENCE_MAX_EXCEEDED (ptr)) {
+
+        return 0;
+    }
+
+    return 1;
+}
+
+static int func_secure_pm (char **pptr) {
+
+    if (NOT_A_UN_PLUS_OR_MINUS (pptr)) {
+
+        return 0;
+    }
+
+    return 1;
+}
+
+#undef PRINT_ERROR
+#undef NO_LEFT_ROUND_BRAC
+#undef NO_RIGHT_ROUND_BRAC
+#undef NO_LEFT_SQUARE_BRAC
+#undef NO_RIGHT_SQUARE_BRAC
 #undef UNKNOWN_OPERATION
 #undef SEQUENCE_MAX_EXCEEDED
+#undef NOT_A_UN_PLUS_OR_MINUS
