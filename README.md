@@ -18,10 +18,10 @@ Documentation
 Documentation lines (suitable for doxygen usage) will be soon added into the
 header files.
 
-System specifications
----------------------
+Shell specifications
+--------------------
 
-If you are using Windows CMD console, please, DO NOT FORGET to replace the
+If you are using Windows CMD shell, please, DO NOT FORGET to replace the
 line "#define BASH_COMPILATION" with "#define WINCMD_COMPILATION" in common.cpp
 file. Ignoring this may lead to a bunch of serious troubles.
 
