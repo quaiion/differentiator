@@ -1,4 +1,4 @@
-                            Differentiator V1.0
+                                    Differentiator V1.0
 
 Description
 -----------
@@ -35,7 +35,7 @@ and execute the "run_diftor" file. The program will ask you to name the .qdf
 text file with the target formula in it. The formula should be printed using
 full-bracket style (see the example in input_example.qdf). As the result you
 will get 2 .png files (expression tree visualizations berfore and after the
-differentiation - dump_init.png and dump_fin.png) and 2.pdf files (initial and
+differentiation - dump_init.png and dump_fin.png) and 2 .pdf files (initial and
 final expressions formed by LaTeX - form_init.pdf and form_fin.pdf). You can
 find the output examples in ---_example.pdf / ---_example.png files.
 
