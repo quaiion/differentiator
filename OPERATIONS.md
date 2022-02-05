@@ -47,5 +47,5 @@ Division       | **/**  | **"(a)/(b)"**, where **a** is a divisible and **b** is
 Logarythm      | **log**| **"log\[a]\(b)"**, where **a** is a basis, **b** is an argument
 Exponentiation | **^**  | **"(a)^(b)"**, where **a** is a basis, **b** is a power
 
-To see an example of correct input style, check the **examples** folder on
+To see an example of correct input style, check the **example_files** folder on
 [https://github.com/quaiion/differentiator](). *More examples will be added soon.*
