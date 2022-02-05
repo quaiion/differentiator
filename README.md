@@ -1,4 +1,4 @@
-                                    Differentiator V1.0
+# Differentiator V1.0
 
 Description
 -----------
@@ -9,8 +9,8 @@ This code represents a practical work of Korney Ivanishin.
 The latest version
 ------------------
 
-The latest version of the Differentiator can be found on it's authors
-GitHub page: https://github.com/quaiion/differentiator.
+The latest version of the Differentiator can be found on its authors
+GitHub page: [https://github.com/quaiion/differentiator]().
 
 Documentation
 -------------
@@ -22,7 +22,7 @@ Shell specifications
 --------------------
 
 If you are using Windows CMD shell, please, DO NOT FORGET to replace the
-line "#define BASH_COMPILATION" with "#define WINCMD_COMPILATION" in common.cpp
+line **#define BASH_COMPILATION** with **#define WINCMD_COMPILATION** in common.cpp
 file. Ignoring this may lead to a bunch of serious troubles.
 
 How-to-use
@@ -39,12 +39,11 @@ differentiation - **dump_init.png** and **dump_fin.png**) and 2 .pdf files (init
 final expressions formed by LaTeX - **form_init.pdf** and **form_fin.pdf**). You can
 find the output examples in **---_example.pdf / ---_example.png files**.
 
-_For more accurate instructions of how to write down an expression please see_
-_the ***OPERATIONS.md file***_
+_For more accurate instructions of how to write down an expression please see the ***OPERATIONS.md*** file._
 
 Contacts
 --------
 
-Korney Ivanishin, author of the project
-e-mail: korney059@gmail.com
+#### Korney Ivanishin, author of the project
+e-mail: korney059@gmail.com,
 GitHub: quaiion
