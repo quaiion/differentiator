@@ -625,6 +625,7 @@ static bin_node_t *create_diff_branch (bin_node_t *node) {
                     bin_node_t *ln_mult_power_copy = bin_tree_create_node (MULT, BINARY_OPERATION, ln_basis_copy, power_copy);
                     bin_node_t *exp_expr = bin_tree_create_node (EXP, UNARY_OPERATION, ln_mult_power_copy, NULL);
                     diff_node = create_diff_branch (exp_expr);
+                    bin_tree_free_branch (exp_expr);
 
                     break;
                 }
@@ -637,6 +638,7 @@ static bin_node_t *create_diff_branch (bin_node_t *node) {
                     bin_node_t *ln_arg_copy = bin_tree_create_node (LN, UNARY_OPERATION, arg_copy, NULL);
                     bin_node_t *div_expr = bin_tree_create_node (DIV, BINARY_OPERATION, ln_arg_copy, ln_basis_copy);
                     diff_node = create_diff_branch (div_expr);
+                    bin_tree_free_branch (div_expr);
 
                     break;
                 }
@@ -781,7 +783,7 @@ static void optimize_expr_branch (bin_node_t *node) {
 
     if (node->right->type == CONSTANT) {
 
-        if (node->right->data == 0) {                           // Тут тоже можноюыло свечу вколотить, но я подумал, что if будет нагляднее
+        if (node->right->data == 0) {                           // Тут тоже можно было свечу вколотить, но я подумал, что if будет нагляднее
 
             switch (node->data) {
 

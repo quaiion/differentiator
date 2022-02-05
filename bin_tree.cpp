@@ -89,14 +89,12 @@ void bin_tree_vis_dump (bin_tree_t *tree, const char *file_name) {
     assert (file_name);
 
 #ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
-
     VERIFICATION_CODES ver_code = DEFAULT;
     if (bin_tree_verify_qck (tree, &ver_code) != NULL) {
 
         printf ("\nBinary tree: visual dump autoverification failed, operation terminated, ver_code %d\n", ver_code);
         return;
     }
-
 #endif
 
     FILE *instr_file = fopen ("vis_instr.gv", "w");
@@ -176,13 +174,11 @@ void bin_tree_form_dump (bin_tree_t *tree, const char *file_name) {
     assert (file_name);
 
 #ifdef BIN_TREE_AUTO_QUICK_VERIFICATION
-
     if (bin_tree_verify_qck (tree) != NULL) {
 
         printf ("\nBinary tree: formula dump autoverification failed, operation terminated\n");
         return;
     }
-
 #endif
 
     FILE *instr_file = fopen ("form_instr.tex", "w");
@@ -265,6 +261,10 @@ static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracke
             if (int_brackets) {
 
                 fprintf (instr_file, "(");
+                
+            } else {
+
+                fprintf (instr_file, " ");
             }
             form_dump_node (node->left, instr_file, int_brackets);
             if (int_brackets) {
@@ -336,9 +336,11 @@ static void form_dump_node (bin_node_t *node, FILE *instr_file, bool prev_bracke
                         form_dump_node (node->left, instr_file, prev_bracket);
                     }
 
-                    if (right_int_brackets == false && node->right->type != VARIABLE) {
+                    if ((right_int_brackets == false && node->right->type != VARIABLE) ||
+                        (node->left->type == UNARY_OPERATION && node->left->data != MINUS &&
+                        node->left->data != PLUS)) {
 
-                        fprintf (instr_file, "\\cdot");
+                        fprintf (instr_file, "\\cdot ");
                     }
                     
                     if (right_int_brackets) {

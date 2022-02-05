@@ -35,5 +35,8 @@ bin_tree.o: bin_tree.cpp
 common.o: common.cpp
 	$(COMPILER) $(GCC_FLAGS) -c common.cpp
 
-clean:
+clean_obj:
 	rm -rf *.o diftor
+
+clean_output:
+	rm -rf *.aux *.dvi *.pdf *.png *.log *.gv *.tex
