@@ -1,33 +1,26 @@
 # Differentiator V1.0
 
-Description
------------
-
+## Description
 A simple program, calculating the diravarive of an expression inserted.
 This code represents a practical work of Korney Ivanishin.
 
-The latest version
-------------------
-
+## The latest version
 The latest version of the Differentiator can be found on its authors
-GitHub page: [https://github.com/quaiion/differentiator]().
+[GitHub page](https://github.com/quaiion/differentiator).
 
-Documentation
--------------
-
+## Documentation
 Documentation lines (suitable for doxygen usage) will be soon added into the
 header files.
 
-Shell specifications
---------------------
+## Dependencies
+To successfully compile this program, you will need to have **GCC** compiler & linker and **make** utility installed (if not, you will just have no ability to use the Makefile, but will still be able to compile the project manually). Besides, you will need the **dot** utility from [Graphviz](https://graphviz.org) software package and any available **TeX** distributive so the program will be able to visualize the output.
 
+## Shell specifications
 If you are using Windows CMD shell, please, DO NOT FORGET to replace the
-line **#define BASH_COMPILATION** with **#define WINCMD_COMPILATION** in common.cpp
+line `#define BASH_COMPILATION` with `#define WINCMD_COMPILATION` in **common.cpp**
 file. Ignoring this may lead to a bunch of serious troubles.
 
-How-to-use
-----------
-
+## How-to-use
 To launch the program, compile **diftor.cpp**, **diftor_main.cpp**, **common.cpp**
 and **bin_tree.cpp** files together (you can use the Makefile attached despite
 the fact that some of mentioned there flags will lead to some false warnings)
@@ -41,9 +34,7 @@ find the output examples in **---_example.pdf / ---_example.png files**.
 
 _For more accurate instructions of how to write down an expression please see the ***OPERATIONS.md*** file._
 
-Contacts
---------
-
+## Contacts
 #### Korney Ivanishin, author of the project
-e-mail: korney059@gmail.com,
-GitHub: quaiion
+email: <korney059@gmail.com>,
+GitHub: [quaiion](https://github.com/quaiion)
