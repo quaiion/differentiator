@@ -1,7 +1,7 @@
 # Differentiator V1.0
 
 ## Description
-A simple program, calculating the diravarive of an expression inserted.
+A simple program, calculating the diravative of an expression inserted.
 This code represents a practical work of Korney Ivanishin.
 
 ## The latest version
