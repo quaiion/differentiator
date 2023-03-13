@@ -23,20 +23,20 @@ all: diftor
 diftor: diftor_main.o diftor.o bin_tree.o common.o
 	$(COMPILER) $(SAN_FLAGS) -o run_diftor diftor_main.o diftor.o bin_tree.o common.o
 
-diftor_main.o: diftor_main.cpp
-	$(COMPILER) $(GCC_FLAGS) -c diftor_main.cpp
+diftor_main.o: src/diftor/diftor_main.cpp
+	$(COMPILER) $(GCC_FLAGS) -c src/diftor/diftor_main.cpp
 
-diftor.o: diftor.cpp
-	$(COMPILER) $(GCC_FLAGS) -c diftor.cpp
+diftor.o: src/diftor/diftor.cpp
+	$(COMPILER) $(GCC_FLAGS) -c src/diftor/diftor.cpp
 
-bin_tree.o: bin_tree.cpp
-	$(COMPILER) $(GCC_FLAGS) -c bin_tree.cpp
+bin_tree.o: src/bintree/bin_tree.cpp
+	$(COMPILER) $(GCC_FLAGS) -c src/bintree/bin_tree.cpp
 
-common.o: common.cpp
-	$(COMPILER) $(GCC_FLAGS) -c common.cpp
+common.o: src/common/common.cpp
+	$(COMPILER) $(GCC_FLAGS) -c src/common/common.cpp
 
 clean_obj:
-	rm -rf *.o diftor
+	rm -rf *.o run_diftor
 
 clean_output:
 	rm -rf *.aux *.dvi *.pdf *.png *.log *.gv *.tex
